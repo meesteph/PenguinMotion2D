@@ -20,6 +20,8 @@ class Penguin(object):
 		self.position = position
 		self.alignment = alignment
 		self.boundary = False
+		self.bisection_angle = 0
+		self.bisector = np.zeros(3)
 
 	def __str__(self):
 
@@ -33,47 +35,47 @@ class Penguin(object):
 
 		return self.position - penguin2.position
 
-	def determine_boundary_condition(self, penguin_list, a):
+	# def determine_boundary_condition(self, penguin_list, a):
 
-		critical_radius = 2.0 * a
+	# 	critical_radius = 2.0 * a
 
-		theta_list = []
+	# 	theta_list = []
 
-		for i in range(len(penguin_list)):
+	# 	for i in range(len(penguin_list)):
 
-			if (penguin_list[i] != self):
+	# 		if (penguin_list[i] != self):
 
-				r = self.get_distance(penguin_list[i])
-				r_mag = np.linalg.norm(r)
+	# 			r = self.get_distance(penguin_list[i])
+	# 			r_mag = np.linalg.norm(r)
 
-				if (r_mag < critical_radius):
+	# 			if (r_mag < critical_radius):
 
-					theta = np.arctan2(r[1],r[0])
-					theta_list.append(theta)
+	# 				theta = np.arctan2(r[1],r[0])
+	# 				theta_list.append(theta)
 
-		theta_list.sort()
+	# 	theta_list.sort()
 
-		for j in range(len(theta_list)):
+	# 	for j in range(len(theta_list)):
 
-			try:
+	# 		try:
 
-				difference = theta_list[j+1] - theta_list[j]
+	# 			difference = theta_list[j+1] - theta_list[j]
 
-			except IndexError:
+	# 		except IndexError:
 
-				difference =  (np.pi - theta_list[j]) + (theta_list[0] + np.pi)
+	# 			difference =  (np.pi - theta_list[j]) + (theta_list[0] + np.pi)
 
-			# print(difference * 180 / np.pi)
+	# 		# print(difference * 180 / np.pi)
 
-			if (difference >= np.pi):
+	# 		if (difference >= np.pi):
 
-				self.boundary = True
+	# 			self.boundary = True
 
-				return True
+	# 			return True
 
-			else:
+	# 		else:
 
-				self.boundary = False
+	# 			self.boundary = False
 
 	def find_exterior_bisector(self, penguin_list, a):
 
@@ -112,6 +114,7 @@ class Penguin(object):
 			if (difference >= np.pi):
 
 				self.boundary = True
+				self.bisection_angle = difference
 
 				exterior_bisector = -1.0 * (r_theta_list[a][0] + r_theta_list[b][0])
 
@@ -140,9 +143,7 @@ class Penguin(object):
 
 						exterior_bisector = np.array([1.0,0.0])
 
-					
-
-
+				self.bisector = exterior_bisector					
 
 				return exterior_bisector
 
@@ -151,15 +152,65 @@ class Penguin(object):
 				self.boundary = False
 
 
-	# def find_net_force(self, F_self, F_in, k, penguin_list, a):
+	def find_net_force(self, F_self, F_in, k, penguin_list, a):
 
-	# 	critical_radius = 1.3 * a
+		critical_radius = 1.3 * a
 
-	# 	F_self_propulsion = F_self * self.alignment
+		F_self_propulsion = F_self * self.alignment
 
-	# 	F_repulsion = np.zeros(3) 
+		F_repulsion = np.zeros(3) 
 
-	# 	for i in range(len(penguin_list)):
+		for i in range(len(penguin_list)):
+
+			if (penguin_list[i] != self):
+
+				if (self.boundary == True):
+
+					F_boundary = F_in * self.alignment * (self.bisection_angle - np.pi)
+
+				else:
+
+					F_boundary = 0
+
+				r = self.get_distance(penguin_list[i])
+				r_mag = np.linalg.norm(r)
+
+				if (r_mag < critical_radius):
+
+					F_repulsion += -k * r
+
+		return F_self_propulsion + F_boundary  + F_repulsion
+
+	def find_net_torque(self, T_in, T_noise, T_align, a):
+
+		critical_radius = 1.3 * a
+
+		if (self.boundary == True):
+
+			T_boundary = T_in * (self.alignment - self.bisector)
+
+		else:
+
+			T_boundary = 0
+
+		eta = random.uniform(-1.0,1.0)
+
+		T_random = T_noise * eta
+
+		T_alignment = zp.zeros(3)
+
+		for i in range(len(penguin_list)):
+
+			if (penguin_list[i] != self):
+
+				r = self.get_distance(penguin_list[i])
+				r_mag = np.linalg.norm(r)
+
+				if (r_mag < critical_radius):
+
+					T_alignment += T_align * (self.alignment - penguin_list[i].alignment)
+
+		return T_boundary + T_random + T_alignment
 
 a = 1.0
 penguin_list = []
