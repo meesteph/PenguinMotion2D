@@ -35,6 +35,15 @@ class Penguin(object):
 
 		return self.position - penguin2.position
 
+	def update_position(self, position):
+
+		self.position = position
+
+	def update_alignment(self, alignment):
+
+		self.alignment = alignment
+
+
 	# def determine_boundary_condition(self, penguin_list, a):
 
 	# 	critical_radius = 2.0 * a
@@ -145,7 +154,9 @@ class Penguin(object):
 
 				self.bisector = exterior_bisector					
 
-				return exterior_bisector
+				# return exterior_bisector
+
+				break
 
 			else:
 
@@ -158,7 +169,7 @@ class Penguin(object):
 
 		F_self_propulsion = F_self * self.alignment
 
-		F_repulsion = np.zeros(3) 
+		F_repulsion = np.zeros(2) 
 
 		for i in range(len(penguin_list)):
 
@@ -175,13 +186,17 @@ class Penguin(object):
 				r = self.get_distance(penguin_list[i])
 				r_mag = np.linalg.norm(r)
 
+				# print i 
+				# print r_mag
+				# print critical_radius
 				if (r_mag < critical_radius):
 
+					# print r
 					F_repulsion += -k * r
 
 		return F_self_propulsion + F_boundary  + F_repulsion
 
-	def find_net_torque(self, T_in, T_noise, T_align, a):
+	def find_net_torque(self, T_in, T_noise, T_align, penguin_list, a):
 
 		critical_radius = 1.3 * a
 
@@ -197,7 +212,7 @@ class Penguin(object):
 
 		T_random = T_noise * eta
 
-		T_alignment = zp.zeros(3)
+		T_alignment = np.zeros(2)
 
 		for i in range(len(penguin_list)):
 
@@ -211,6 +226,49 @@ class Penguin(object):
 					T_alignment += T_align * (self.alignment - penguin_list[i].alignment)
 
 		return T_boundary + T_random + T_alignment
+
+
+def move_penguins(penguin_list, a):
+
+	F_self = 1.0
+	F_in = 1.0
+	k = 1.0
+	T_in = 1.0
+	T_noise = 1.0
+	T_align = 1.0
+
+	t_start = 0.01
+	t_end = 1.0
+	t_iter = 0.01
+
+	mass = 1.0
+
+	while t_start < t_end:
+
+		for i in range(len(penguin_list)):
+
+			penguin = penguin_list[i]
+			force = penguin.find_net_force(F_self, F_in, k, penguin_list, a)
+			torque = penguin.find_net_torque(T_in, T_noise, T_align, penguin_list, a)
+
+			I = (2.0 / 5.0) * mass * penguin.radius ** 2.0
+			alpha = torque / I
+
+			acceleration = force / mass
+
+			new_position = penguin.position + acceleration * t_iter
+			new_alignment = penguin.alignment + alpha * t_iter
+
+			penguin.update_position(new_position)
+			penguin.update_alignment(new_alignment)
+
+			penguin.find_exterior_bisector(penguin_list, a)
+
+
+		print t_start
+		t_start += t_iter
+
+
 
 a = 1.0
 penguin_list = []
@@ -247,13 +305,16 @@ for i in range(5):
 
 for penguin in penguin_list:
 
-	print penguin
+	# print penguin
 
-	exterior_bisector = penguin.find_exterior_bisector(penguin_list, a)
+	penguin.find_exterior_bisector(penguin_list, a)
 
-	print exterior_bisector
+	# print exterior_bisector
 
 	# print penguin.boundary
+
+	# print penguin.find_net_force(1.0,1.0,1,penguin_list,1.0)
+	# print penguin.find_net_torque(1.0,1.0,1.0,penguin_list,1.0)
 
 	if penguin.boundary == True:
 
@@ -263,11 +324,38 @@ for penguin in penguin_list:
 
 		plt.plot(penguin.position[0], penguin.position[1], "bo")
 
-plt.xlim([-1,5])
-plt.ylim([-1,5])
+
+
+# plt.xlim([-1,5])
+# plt.ylim([-1,5])
 plt.show()
 
+plt.clf()
 
+move_penguins(penguin_list, a)
+
+for penguin in penguin_list:
+
+	# print penguin
+
+	penguin.find_exterior_bisector(penguin_list, a)
+
+	# print exterior_bisector
+
+	# print penguin.boundary
+
+	# print penguin.find_net_force(1.0,1.0,1,penguin_list,1.0)
+	# print penguin.find_net_torque(1.0,1.0,1.0,penguin_list,1.0)
+
+	if penguin.boundary == True:
+
+		plt.plot(penguin.position[0], penguin.position[1], "ro")
+
+	else:
+
+		plt.plot(penguin.position[0], penguin.position[1], "bo")
+
+plt.show()
 
 
 
