@@ -154,7 +154,6 @@ class Penguin(object):
 				# print critical_radius
 				if (r_mag < critical_radius):
 
-					# print r
 					F_repulsion += -k * r
 
 		return F_self_propulsion + F_boundary  + F_repulsion
@@ -220,7 +219,7 @@ def initialize_penguins(N, a):
 
 			position = np.array([x,y])
 
-			x_align = 1.0 + random.uniform(-0.3,0.3)
+			x_align = 0.01 + random.uniform(-0.005,0.005)
 			y_align = 0
 
 			alignment = np.array([x_align,y_align])
@@ -232,12 +231,11 @@ def initialize_penguins(N, a):
 
 	return penguin_list
 
-
-
-
 def init():
 
-	print "in init()"
+	# print "in init()"
+
+	global ax
 
 	path = ax.scatter([],[])
 
@@ -245,15 +243,15 @@ def init():
 
 def update_graph(i):
 
-	print "in update_graph"
+	# print "in update_graph"
 
 	ax.clear()
 
-	ax.set_ylim([0,10])
+	ax.set_ylim([-5,15])
 	ax.set_ylabel("Y")
 
-	ax.set_xlim([0,10])
-	ax.set_xlabel([0,10])
+	ax.set_xlim([-5,15])
+	ax.set_xlabel("X")
 
 	x = data[0][i]
 	y = data[1][i]
@@ -262,30 +260,17 @@ def update_graph(i):
 
 	return path
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 def move_penguins(penguin_list, a):
 
-	F_self = 1.0
-	F_in = 10.0
-	k = 1.0
-	T_in = 0.01
-	T_noise = 0.01
+	F_self = 6.0
+	F_in = 5.0
+	k = -2.0
+	T_in = -2.0
+	T_noise = 0.1
 	T_align = 0.1
 
 	t_start = 0.01
-	t_end = 2.0
+	t_end = 1.5
 	t_iter = 0.01
 
 	mass = 1.0
@@ -339,24 +324,24 @@ def move_penguins(penguin_list, a):
 
 def main():
 
-
-	fig = plt.figure()
-	ax = plt.axes(xlim=(0,10), ylim=(0,10))
-
-	numframes = 18
+	numframes = 149
 
 	a = 1.0
 
 	penguin_list = initialize_penguins(10, a)
 
-	plt.xlim([-1,10])
-	plt.ylim([-1,10])
+	# plt.xlim([-1,10])
+	# plt.ylim([-1,10])
 
-	plot_penguins(penguin_list, a)
+	# plot_penguins(penguin_list, a)
 
 	move_penguins(penguin_list, a)
 
-	plot_penguins(penguin_list, a)
+	# plot_penguins(penguin_list, a)
+
+	fig = plt.figure()
+	global ax
+	ax = fig.add_subplot(111)
 
 	anim = animation.FuncAnimation(fig, update_graph, numframes, blit=False, init_func=init)
 
